@@ -1,0 +1,66 @@
+{
+    "title": "IndiaMART B2B Supplier Scraper Input",
+    "description": "Scrape supplier/product lead records from public IndiaMART category pages.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "keywords": {
+            "title": "Category Keywords",
+            "description": "IndiaMART category keywords. The actor converts each keyword to a category URL, for example cotton fabric -> /impcat/cotton-fabric.html.",
+            "type": "array",
+            "editor": "stringList",
+            "prefill": ["cotton fabric"],
+            "example": ["cotton fabric", "industrial pump", "packaging machine"],
+            "items": {
+                "type": "string"
+            }
+        },
+        "location": {
+            "title": "Location",
+            "description": "Optional city filter, for example Mumbai or Jaipur. Leave empty for all-India category pages.",
+            "type": "string",
+            "editor": "textfield",
+            "default": "",
+            "prefill": ""
+        },
+        "maxResults": {
+            "title": "Max Results",
+            "description": "Maximum clean supplier lead records to save across all keywords.",
+            "type": "integer",
+            "editor": "number",
+            "default": 50,
+            "prefill": 50,
+            "minimum": 1,
+            "maximum": 1000
+        },
+        "includeOrganic": {
+            "title": "Include Organic Cards",
+            "description": "Extract visible organic supplier/product cards from the category page.",
+            "type": "boolean",
+            "editor": "checkbox",
+            "default": true,
+            "prefill": true
+        },
+        "includeSponsored": {
+            "title": "Include Sponsored Data",
+            "description": "Extract sponsored/all-India records from embedded page data when available.",
+            "type": "boolean",
+            "editor": "checkbox",
+            "default": true,
+            "prefill": true
+        },
+        "proxyConfiguration": {
+            "title": "Proxy Configuration",
+            "description": "Residential India proxy is recommended for stable access to IndiaMART category pages.",
+            "type": "object",
+            "editor": "proxy",
+            "prefill": {
+                "useApifyProxy": true,
+                "apifyProxyGroups": ["RESIDENTIAL"],
+                "apifyProxyCountry": "IN"
+            },
+            "sectionCaption": "Proxy Settings"
+        }
+    },
+    "required": ["keywords"]
+}

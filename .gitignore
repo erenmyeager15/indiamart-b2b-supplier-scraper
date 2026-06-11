@@ -1,0 +1,14 @@
+node_modules/
+dist/
+storage/
+apify_storage/
+crawlee_storage/
+*.log
+.env
+.idea/
+.vscode/
+*.tgz
+*.tsbuildinfo
+probe.mjs
+checkdata.mjs
+test_input.json

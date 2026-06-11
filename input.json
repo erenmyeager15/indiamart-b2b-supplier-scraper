@@ -1,0 +1,12 @@
+{
+    "keywords": ["cotton fabric"],
+    "location": "",
+    "maxResults": 10,
+    "includeOrganic": true,
+    "includeSponsored": true,
+    "proxyConfiguration": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"],
+        "apifyProxyCountry": "IN"
+    }
+}

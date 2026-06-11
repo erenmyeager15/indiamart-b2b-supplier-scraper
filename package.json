@@ -1,0 +1,28 @@
+{
+    "name": "indiamart-b2b-supplier-scraper",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Apify Actor that scrapes public IndiaMART category pages for B2B supplier and product lead data.",
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "scripts": {
+        "start": "npm run build && node dist/main.js",
+        "build": "tsc",
+        "dev": "tsc && node dist/main.js",
+        "lint": "tsc --noEmit",
+        "test": "npm run build"
+    },
+    "dependencies": {
+        "apify": "^3.2.6",
+        "cheerio": "^1.0.0",
+        "undici": "^6.21.1"
+    },
+    "devDependencies": {
+        "@apify/tsconfig": "^0.1.0",
+        "@types/node": "^20.0.0",
+        "typescript": "~5.6.0"
+    },
+    "author": "",
+    "license": "Apache-2.0"
+}
