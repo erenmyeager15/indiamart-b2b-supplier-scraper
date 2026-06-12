@@ -119,7 +119,6 @@ function parseSponsoredData(
             price: price ?? undefined,
             currency: cleanText(item.CURRENCY) ?? (price?.includes('₹') ? 'INR' : undefined),
             unit: unit ?? undefined,
-            contactNumber: cleanText(item.CONTACT_NUMBER) ?? undefined,
             contactActionAvailable: Boolean(item.CONTACT_NUMBER),
             gstVerified: toBoolean(item.GST_VERIFIED_FLAG),
             mobileVerified: toBoolean(item.MOBILE_VERIFIED),

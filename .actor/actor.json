@@ -1,10 +1,10 @@
 {
     "actorSpecification": 1,
     "name": "indiamart-b2b-supplier-scraper",
-    "title": "IndiaMART B2B Supplier Scraper - Product Leads",
-    "description": "Scrape public IndiaMART category pages for B2B supplier/product leads with company names, product titles, cities, prices, URLs, images, and verification signals.",
+    "title": "IndiaMART B2B Supplier Scraper - Product Listings",
+    "description": "Scrape public IndiaMART category pages for supplier/product listings with company names, product titles, cities, prices, URLs, images, and verification signals.",
     "version": "1.0",
-    "categories": ["BUSINESS", "LEAD_GENERATION", "ECOMMERCE"],
+    "categories": ["BUSINESS", "ECOMMERCE"],
     "dockerfile": "Dockerfile",
     "input": "../INPUT_SCHEMA.json",
     "storages": {
@@ -12,7 +12,7 @@
             "actorSpecification": 1,
             "views": {
                 "suppliers": {
-                    "title": "Supplier Leads",
+                    "title": "Supplier Listings",
                     "transformation": {
                         "fields": [
                             "sourceType",
@@ -52,7 +52,7 @@
             "actorChargeEvents": {
                 "supplier-scraped": {
                     "eventTitle": "Supplier scraped",
-                    "eventDescription": "Charged once for each clean IndiaMART supplier lead record saved to the dataset.",
+                    "eventDescription": "Charged once for each clean IndiaMART supplier record saved to the dataset.",
                     "eventPriceUsd": 0.003,
                     "isPrimaryEvent": true,
                     "isOneTimeEvent": false

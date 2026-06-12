@@ -1,6 +1,6 @@
 # IndiaMART B2B Supplier Scraper - Product Leads
 
-IndiaMART B2B Supplier Scraper extracts public supplier and product lead data from IndiaMART category pages. It collects company names, product titles, cities, URLs, images, price text when shown, verification signals, and contact-action availability. Export to JSON, CSV, Excel, or HTML, or pull via the Apify API. No login or API key is required for the public category pages used by this actor.
+IndiaMART B2B Supplier Scraper extracts public supplier and product listing data from IndiaMART category pages. It collects company names, product titles, cities, URLs, images, price text when shown, verification signals, and contact-action availability. Export to JSON, CSV, Excel, or HTML, or pull via the Apify API. No login or API key is required for the public category pages used by this actor.
 
 ## What It Extracts
 
@@ -11,15 +11,15 @@ IndiaMART B2B Supplier Scraper extracts public supplier and product lead data fr
 - City, state, and address when present
 - Price, currency, and unit when present
 - Product image URL
-- Contact-action availability and public contact number when embedded in page data
+- Contact-action availability (a boolean flag only; no phone numbers or emails are extracted)
 - Supplier badge, trust badges, member-since text, rating, and rating count when visible
-- GST/mobile/email verification flags when embedded in page data
+- GST/mobile/email verification flags (boolean badges only; no underlying numbers or emails) when embedded in page data
 - Product specifications from visible category cards
 - Scraped timestamp
 
 ## Use Cases
 
-- Build India supplier lead lists for B2B sales teams
+- Build India supplier directories for B2B market research
 - Find manufacturers, exporters, wholesalers, and distributors by category
 - Monitor supplier/product coverage across IndiaMART categories
 - Enrich sourcing databases with public supplier URLs and product links
@@ -72,7 +72,6 @@ The actor charges only after a clean supplier lead record is saved to the datase
   "price": "INR 58/Meter",
   "currency": "INR",
   "unit": "Meter",
-  "contactNumber": "+91-7942545694",
   "contactActionAvailable": true,
   "gstVerified": true,
   "mobileVerified": true,
@@ -88,10 +87,16 @@ The actor builds public IndiaMART category URLs from your keywords, fetches the 
 ## Known Limits
 
 - This actor uses public category pages, not private IndiaMART lead APIs.
-- Email addresses, GST numbers, and direct mobile numbers are not guaranteed and are only included when publicly embedded in page data.
+- This actor outputs only non-personal business listing facts. It does not extract phone numbers, emails, GST numbers, or personal contact details; verification fields are boolean badges only.
 - Some keywords may not map to a valid IndiaMART category slug. Try the product category wording used on IndiaMART.
 - IndiaMART can change page markup or anti-bot behavior without notice.
 - Location pages depend on IndiaMART URL availability for that city/category pair.
+
+## Responsible Use
+
+This Actor is intended for lawful collection of publicly available information only. Users are responsible for ensuring their use complies with the source website's terms, robots.txt, applicable privacy laws, including India's DPDP Act, and all local regulations.
+
+Do not use this Actor to collect, store, sell, or misuse personal data without a lawful basis. The Actor author is not responsible for misuse by end users.
 
 ## License
 

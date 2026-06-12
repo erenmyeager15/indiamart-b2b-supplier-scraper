@@ -1,6 +1,6 @@
 {
     "title": "IndiaMART B2B Supplier Scraper Input",
-    "description": "Scrape supplier/product lead records from public IndiaMART category pages.",
+    "description": "Scrape supplier/product records from public IndiaMART category pages.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
@@ -25,7 +25,7 @@
         },
         "maxResults": {
             "title": "Max Results",
-            "description": "Maximum clean supplier lead records to save across all keywords.",
+            "description": "Maximum clean supplier records to save across all keywords.",
             "type": "integer",
             "editor": "number",
             "default": 50,

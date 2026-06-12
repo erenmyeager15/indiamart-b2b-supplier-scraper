@@ -30,7 +30,6 @@ export interface SupplierLeadRecord {
     unit?: string;
     state?: string;
     address?: string;
-    contactNumber?: string;
     contactActionAvailable?: boolean;
     supplierBadge?: string;
     trustBadges?: string[];
