@@ -56,26 +56,28 @@ The actor charges only after a clean supplier lead record is saved to the datase
 
 ```json
 {
-  "sourceType": "organic",
+  "sourceType": "sponsored",
   "keyword": "cotton fabric",
   "categoryName": "Cotton Fabric",
   "categoryUrl": "https://dir.indiamart.com/impcat/cotton-fabric.html",
-  "sourceListingId": "dispId23205079862",
-  "productName": "Plain/Solids Plain Cotton Fabric",
-  "companyName": "Pooja Industries Private Limited",
-  "city": "Ludhiana",
-  "companyUrl": "https://www.poojakriscan.com/",
-  "productUrl": "https://www.indiamart.com/proddetail/plain-cotton-fabric-23205079862.html",
-  "price": "Rs. 130/Meter",
+  "sourceListingId": "2859307971312",
+  "productName": "Cotton Jersey Fabric Material, GSM (Fabric Weight): 180GSM, 60x40",
+  "companyName": "Shengtu Enterprises",
+  "city": "Valsad",
+  "state": "Gujarat",
+  "address": "Valsad, Gujarat",
+  "companyUrl": "https://www.indiamart.com/shengtuenterprises/",
+  "productUrl": "https://www.indiamart.com/proddetail/cotton-jersey-fabric-material-2859307971312.html",
+  "imageUrl": "https://5.imimg.com/data5/SELLER/Default/2026/5/612145025/LX/HI/TN/154409241/cotton-jersey-fabric-material-500x500.jpg",
+  "price": "INR 58/Meter",
   "currency": "INR",
   "unit": "Meter",
+  "contactNumber": "+91-7942545694",
   "contactActionAvailable": true,
-  "supplierBadge": "Leading Supplier",
-  "trustBadges": ["Verified Exporter", "9 yrs"],
-  "memberSinceYears": "9 yrs",
-  "rating": 3.9,
-  "ratingCount": 793,
-  "scrapedAt": "2026-06-12T00:00:00.000Z"
+  "gstVerified": true,
+  "mobileVerified": true,
+  "emailVerified": true,
+  "scrapedAt": "2026-06-12T20:17:33.721Z"
 }
 ```
 
