@@ -1,12 +1,15 @@
 import { Actor } from 'apify';
 import { ProxyAgent } from 'undici';
-import { scrapeIndiaMartSuppliers } from './routes.js';
-import type { ActorInput, FetchOptions, SupplierLeadRecord } from './types.js';
+import { interpretChargeResult } from './billing.js';
+import { isChargeableRecord, scrapeIndiaMartSuppliers } from './routes.js';
+import type { ActorInput, FetchOptions } from './types.js';
+
+const SUPPLIER_SCRAPED_EVENT = 'supplier-scraped';
 
 const DEFAULT_INPUT: ActorInput = {
     keywords: ['cotton fabric'],
     location: '',
-    maxResults: 50,
+    maxResults: 5,
     includeOrganic: true,
     includeSponsored: true,
     proxyConfiguration: {
@@ -32,17 +35,41 @@ try {
     });
 
     const records = await scrapeIndiaMartSuppliers(input, fetchOptions);
-    console.log(`Prepared ${records.length} clean supplier lead record(s).`);
+    console.log(`Prepared ${records.length} clean supplier/product record(s).`);
 
-    let pushed = 0;
-    for (const record of records) {
-        if (!isChargeableRecord(record)) continue;
-        await Actor.pushData(record);
-        await chargeSupplierEvent();
-        pushed++;
+    if (records.length === 0) {
+        const message = 'IndiaMART returned no usable supplier/product records. Check the keyword, location, and Residential India proxy settings.';
+        await Actor.setStatusMessage(message);
+        throw new Error(message);
     }
 
-    console.log(`Finished. Saved ${pushed} supplier lead record(s).`);
+    let pushed = 0;
+    let spendingLimitReached = false;
+    for (const record of records) {
+        if (!isChargeableRecord(record)) continue;
+
+        const chargeResult = await Actor.pushData(record, SUPPLIER_SCRAPED_EVENT);
+        const decision = interpretChargeResult(chargeResult);
+        if (decision.recordWasSaved) pushed++;
+
+        if (decision.limitReached) {
+            spendingLimitReached = true;
+            await Actor.setStatusMessage(`Stopped at the user's spending limit after ${pushed} saved record(s).`);
+            console.log('User spending limit reached; stopping before more records are saved.');
+            break;
+        }
+    }
+
+    if (pushed === 0 && !spendingLimitReached) {
+        const message = 'No IndiaMART records were saved. Nothing was charged for supplier-scraped events.';
+        await Actor.setStatusMessage(message);
+        throw new Error(message);
+    }
+
+    if (!spendingLimitReached) {
+        await Actor.setStatusMessage(`Saved ${pushed} IndiaMART supplier/product record(s).`);
+    }
+    console.log(`Finished. Saved ${pushed} supplier/product record(s).`);
 } finally {
     await Actor.exit();
 }
@@ -84,19 +111,4 @@ function normalizeInteger(value: number | undefined, fallback: number, min: numb
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return fallback;
     return Math.min(max, Math.max(min, Math.floor(parsed)));
-}
-
-function isChargeableRecord(record: SupplierLeadRecord): boolean {
-    return Boolean(record.productName && record.companyName && record.city && (record.productUrl || record.companyUrl));
-}
-
-async function chargeSupplierEvent(): Promise<void> {
-    if (!Actor.isAtHome()) return;
-
-    try {
-        await Actor.charge({ eventName: 'supplier-scraped' });
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.warn(`PPE charge failed; continuing: ${message}`);
-    }
 }

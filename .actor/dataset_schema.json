@@ -1,35 +1,53 @@
 {
-    "type": "object",
-    "properties": {
-        "sourceType": { "type": "string" },
-        "keyword": { "type": "string" },
-        "categoryName": { "type": "string" },
-        "categoryUrl": { "type": "string" },
-        "sourceListingId": { "type": "string" },
-        "productName": { "type": "string" },
-        "companyName": { "type": "string" },
-        "city": { "type": "string" },
-        "companyUrl": { "type": "string" },
-        "productUrl": { "type": "string" },
-        "imageUrl": { "type": "string" },
-        "price": { "type": "string" },
-        "currency": { "type": "string" },
-        "unit": { "type": "string" },
-        "state": { "type": "string" },
-        "address": { "type": "string" },
-        "contactNumber": { "type": "string" },
-        "contactActionAvailable": { "type": "boolean" },
-        "supplierBadge": { "type": "string" },
-        "trustBadges": { "type": "array", "items": { "type": "string" } },
-        "memberSinceYears": { "type": "string" },
-        "rating": { "type": "number" },
-        "ratingCount": { "type": "integer" },
-        "gstVerified": { "type": "boolean" },
-        "mobileVerified": { "type": "boolean" },
-        "emailVerified": { "type": "boolean" },
-        "minOrderQuantity": { "type": "string" },
-        "specifications": { "type": "object" },
-        "scrapedAt": { "type": "string" }
-    },
-    "required": ["sourceType", "keyword", "categoryName", "categoryUrl", "sourceListingId", "productName", "companyName", "city", "scrapedAt"]
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object"
+  },
+  "views": {
+    "suppliers": {
+      "title": "Products & Suppliers",
+      "description": "Public IndiaMART product and supplier listing facts for sourcing and market research.",
+      "transformation": {
+        "fields": [
+          "imageUrl",
+          "productName",
+          "companyName",
+          "city",
+          "state",
+          "price",
+          "minOrderQuantity",
+          "rating",
+          "ratingCount",
+          "supplierBadge",
+          "gstVerified",
+          "sourceType",
+          "keyword",
+          "productUrl",
+          "companyUrl",
+          "scrapedAt"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "imageUrl": { "label": "Image", "format": "image" },
+          "productName": { "label": "Product", "format": "text" },
+          "companyName": { "label": "Company", "format": "text" },
+          "city": { "label": "City", "format": "text" },
+          "state": { "label": "State", "format": "text" },
+          "price": { "label": "Price", "format": "text" },
+          "minOrderQuantity": { "label": "MOQ", "format": "text" },
+          "rating": { "label": "Rating", "format": "number" },
+          "ratingCount": { "label": "Ratings", "format": "number" },
+          "supplierBadge": { "label": "Supplier Badge", "format": "text" },
+          "gstVerified": { "label": "GST Verified", "format": "boolean" },
+          "sourceType": { "label": "Listing Type", "format": "text" },
+          "keyword": { "label": "Keyword", "format": "text" },
+          "productUrl": { "label": "Product URL", "format": "link" },
+          "companyUrl": { "label": "Company URL", "format": "link" },
+          "scrapedAt": { "label": "Scraped At", "format": "date" }
+        }
+      }
+    }
+  }
 }

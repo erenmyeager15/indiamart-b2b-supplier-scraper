@@ -29,7 +29,6 @@ export interface SupplierLeadRecord {
     currency?: string;
     unit?: string;
     state?: string;
-    address?: string;
     contactActionAvailable?: boolean;
     supplierBadge?: string;
     trustBadges?: string[];
@@ -64,7 +63,6 @@ export interface IndiaMartPlaItem {
     ISQ_RESPONSE?: unknown;
     ITEM_ID?: string | number;
     ITEM_NAME?: string;
-    LONG_ADDRESS?: string;
     MOBILE_VERIFIED?: string | number;
     PC_ITEM_DISPLAY_NAME?: string;
     PC_ITEM_URL?: string;
@@ -73,7 +71,6 @@ export interface IndiaMartPlaItem {
     PRICE?: string | number;
     PRICE_F?: string;
     PRICE_SEO?: string;
-    SHORT_ADDRESS?: string;
     STATE_NAME?: string;
     UNIT?: string;
 }

@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "IndiaMART Product & Supplier Scraper Output",
+  "description": "Structured public IndiaMART product and supplier listing records saved to the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "IndiaMART product and supplier records",
+      "description": "Dataset items containing product, company, location, price, MOQ, rating, verification, image, specification, and source URL fields.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

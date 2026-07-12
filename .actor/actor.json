@@ -1,71 +1,47 @@
 {
-    "actorSpecification": 1,
-    "name": "indiamart-b2b-supplier-scraper",
-    "title": "IndiaMART B2B Supplier Scraper - Product Listings",
-    "description": "Scrape public IndiaMART category pages for supplier/product listings with company names, product titles, cities, prices, URLs, images, and verification signals.",
-    "version": "1.0",
-    "categories": ["BUSINESS", "ECOMMERCE"],
-    "dockerfile": "Dockerfile",
-    "input": "../INPUT_SCHEMA.json",
-    "storages": {
-        "dataset": {
-            "actorSpecification": 1,
-            "views": {
-                "suppliers": {
-                    "title": "Supplier Listings",
-                    "transformation": {
-                        "fields": [
-                            "sourceType",
-                            "keyword",
-                            "categoryName",
-                            "productName",
-                            "companyName",
-                            "city",
-                            "companyUrl",
-                            "productUrl",
-                            "contactActionAvailable",
-                            "scrapedAt"
-                        ]
-                    },
-                    "display": {
-                        "component": "table",
-                        "properties": {
-                            "sourceType": { "label": "Source Type", "format": "text" },
-                            "keyword": { "label": "Keyword", "format": "text" },
-                            "categoryName": { "label": "Category", "format": "text" },
-                            "productName": { "label": "Product", "format": "text" },
-                            "companyName": { "label": "Company", "format": "text" },
-                            "city": { "label": "City", "format": "text" },
-                            "companyUrl": { "label": "Company URL", "format": "link" },
-                            "productUrl": { "label": "Product URL", "format": "link" },
-                            "contactActionAvailable": { "label": "Contact Action", "format": "boolean" },
-                            "scrapedAt": { "label": "Scraped At", "format": "date" }
-                        }
-                    }
-                }
-            }
+  "actorSpecification": 1,
+  "name": "indiamart-b2b-supplier-scraper",
+  "title": "IndiaMART Product & Supplier Scraper",
+  "description": "Extract public IndiaMART product and supplier listing data for sourcing and market research: company, product, city, price, MOQ, ratings, verification badges, images, specifications, and source URLs. No phone numbers or emails.",
+  "version": "1.0",
+  "dockerfile": "Dockerfile",
+  "input": "../INPUT_SCHEMA.json",
+  "readme": "../README.md",
+  "output": "./output_schema.json",
+  "pricingInfo": {
+    "pricingModel": "PAY_PER_EVENT",
+    "pricingPerEvent": {
+      "actorChargeEvents": {
+        "apify-actor-start": {
+          "eventTitle": "Actor Start",
+          "eventDescription": "Charged when the Actor starts running. Number of events charged depends on Actor memory (one event per GB, minimum one event).",
+          "eventPriceUsd": 0.00005,
+          "isPrimaryEvent": false,
+          "isOneTimeEvent": true
+        },
+        "supplier-scraped": {
+          "eventTitle": "Supplier scraped",
+          "eventDescription": "Charged once for each clean IndiaMART product and supplier record saved atomically to the dataset.",
+          "eventPriceUsd": 0.003,
+          "isPrimaryEvent": true,
+          "isOneTimeEvent": false
         }
-    },
-    "pricingInfo": {
-        "pricingModel": "PAY_PER_EVENT",
-        "pricingPerEvent": {
-            "actorChargeEvents": {
-                "supplier-scraped": {
-                    "eventTitle": "Supplier scraped",
-                    "eventDescription": "Charged once for each clean IndiaMART supplier record saved to the dataset.",
-                    "eventPriceUsd": 0.003,
-                    "isPrimaryEvent": true,
-                    "isOneTimeEvent": false
-                }
-            }
-        }
-    },
-    "defaultRunOptions": {
-        "build": "latest",
-        "memoryMbytes": 1024,
-        "timeoutSecs": 3600
-    },
-    "minMemoryMbytes": 512,
-    "maxMemoryMbytes": 4096,
-    "webScraper": false
+      }
+    }
+  },
+  "categories": ["BUSINESS", "ECOMMERCE"],
+  "minMemoryMbytes": 512,
+  "maxMemoryMbytes": 512,
+  "defaultRunOptions": {
+    "build": "latest",
+    "memoryMbytes": 512,
+    "timeoutSecs": 300
+  },
+  "exampleRunInput": {
+    "body": "{\n  \"keywords\": [\"cotton fabric\"],\n  \"location\": \"\",\n  \"maxResults\": 5,\n  \"includeOrganic\": true,\n  \"includeSponsored\": true,\n  \"proxyConfiguration\": {\n    \"useApifyProxy\": true,\n    \"apifyProxyGroups\": [\"RESIDENTIAL\"],\n    \"apifyProxyCountry\": \"IN\"\n  }\n}",
+    "contentType": "application/json; charset=utf-8"
+  },
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  }
 }

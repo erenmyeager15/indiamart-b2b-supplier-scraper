@@ -1,6 +1,6 @@
 {
-    "title": "IndiaMART B2B Supplier Scraper Input",
-    "description": "Scrape supplier/product records from public IndiaMART category pages.",
+    "title": "IndiaMART Product & Supplier Scraper Input",
+    "description": "Extract non-personal product and supplier listing facts from public IndiaMART category pages for sourcing and market research.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
@@ -28,8 +28,8 @@
             "description": "Maximum clean supplier records to save across all keywords.",
             "type": "integer",
             "editor": "number",
-            "default": 50,
-            "prefill": 50,
+            "default": 5,
+            "prefill": 5,
             "minimum": 1,
             "maximum": 1000
         },
@@ -55,6 +55,11 @@
             "type": "object",
             "editor": "proxy",
             "prefill": {
+                "useApifyProxy": true,
+                "apifyProxyGroups": ["RESIDENTIAL"],
+                "apifyProxyCountry": "IN"
+            },
+            "default": {
                 "useApifyProxy": true,
                 "apifyProxyGroups": ["RESIDENTIAL"],
                 "apifyProxyCountry": "IN"

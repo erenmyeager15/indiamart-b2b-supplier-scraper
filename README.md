@@ -1,103 +1,104 @@
-# IndiaMART B2B Supplier Scraper - Product Leads
+# IndiaMART Product & Supplier Scraper
 
-IndiaMART B2B Supplier Scraper extracts public supplier and product listing data from IndiaMART category pages. It collects company names, product titles, cities, URLs, images, price text when shown, verification signals, and contact-action availability. Export to JSON, CSV, Excel, or HTML, or pull via the Apify API. No login or API key is required for the public category pages used by this actor.
+Extract structured product and supplier listing facts from public IndiaMART category pages. Search by category keyword and optional city, then export company names, products, prices, MOQ, ratings, verification badges, images, specifications, and source URLs to JSON, CSV, Excel, HTML, or the Apify API.
+
+No login or API key is required. The Actor does not extract phone numbers, email addresses, GST numbers, or personal contact details.
 
 ## What It Extracts
 
-- Source type: organic or sponsored
-- Search keyword and IndiaMART category name
-- Product name and product URL
-- Supplier/company name and company URL
-- City, state, and address when present
-- Price, currency, and unit when present
-- Product image URL
-- Contact-action availability (a boolean flag only; no phone numbers or emails are extracted)
-- Supplier badge, trust badges, member-since text, rating, and rating count when visible
-- GST/mobile/email verification flags (boolean badges only; no underlying numbers or emails) when embedded in page data
-- Product specifications from visible category cards
-- Scraped timestamp
+- Product and company names
+- Product and company URLs
+- Category keyword and listing type
+- City and state
+- Price, currency, unit, and minimum order quantity when available
+- Product image URL and specifications
+- Supplier badge, trust badges, member-since text, rating, and rating count
+- GST, mobile, and email verification status as boolean badges only
+- Scrape timestamp
 
-## Use Cases
-
-- Build India supplier directories for B2B market research
-- Find manufacturers, exporters, wholesalers, and distributors by category
-- Monitor supplier/product coverage across IndiaMART categories
-- Enrich sourcing databases with public supplier URLs and product links
-- Research pricing signals and market availability for product categories
-
-## Pricing
-
-| Event | Price | Per 1,000 suppliers | Per 10,000 suppliers |
-| --- | ---: | ---: | ---: |
-| `supplier-scraped` | $0.003 | $3.00 | $30.00 |
-
-The actor charges only after a clean supplier lead record is saved to the dataset.
+Missing source values are omitted. The Actor never invents prices, ratings, verification status, or contact information.
 
 ## Input
 
-| Field | Type | Default | Description |
+| Field | Required | Default | Description |
 | --- | --- | --- | --- |
-| `keywords` | string[] | `["cotton fabric"]` | Product/category keywords. Each keyword is converted to an IndiaMART category URL. |
-| `location` | string | empty | Optional city page, such as `Mumbai` or `Jaipur`. Leave empty for all-India category pages. |
-| `maxResults` | integer | `50` | Maximum clean supplier lead records to save. |
-| `includeOrganic` | boolean | `true` | Extract visible organic supplier/product cards. |
-| `includeSponsored` | boolean | `true` | Extract sponsored/all-India embedded page data when available. |
-| `proxyConfiguration` | object | India residential | Proxy settings for category-page fetches. |
+| `keywords` | Yes | `["cotton fabric"]` | IndiaMART category keywords. |
+| `location` | No | empty | Optional city such as Mumbai or Jaipur. |
+| `maxResults` | No | `5` | Maximum records saved across all keywords. |
+| `includeOrganic` | No | `true` | Include visible organic category cards. |
+| `includeSponsored` | No | `true` | Include embedded sponsored/all-India records. |
+| `proxyConfiguration` | No | Residential India | Proxy used for public category-page access. |
 
-## How to Scrape IndiaMART Suppliers (Step by Step)
-
-1. Enter one or more category keywords such as `cotton fabric`, `industrial pump`, or `packaging machine`.
-2. Optionally enter a city, or leave location empty for all-India results.
-3. Set `maxResults` and choose whether to include organic and sponsored records.
-4. Run the actor and wait for the dataset to fill.
-5. Export results from the Dataset tab or consume them through the Apify API.
-
-## Sample Output
+## Example Input
 
 ```json
 {
-  "sourceType": "sponsored",
-  "keyword": "cotton fabric",
-  "categoryName": "Cotton Fabric",
-  "categoryUrl": "https://dir.indiamart.com/impcat/cotton-fabric.html",
-  "sourceListingId": "2859307971312",
-  "productName": "Cotton Jersey Fabric Material, GSM (Fabric Weight): 180GSM, 60x40",
-  "companyName": "Shengtu Enterprises",
-  "city": "Valsad",
-  "state": "Gujarat",
-  "address": "Valsad, Gujarat",
-  "companyUrl": "https://www.indiamart.com/shengtuenterprises/",
-  "productUrl": "https://www.indiamart.com/proddetail/cotton-jersey-fabric-material-2859307971312.html",
-  "imageUrl": "https://5.imimg.com/data5/SELLER/Default/2026/5/612145025/LX/HI/TN/154409241/cotton-jersey-fabric-material-500x500.jpg",
-  "price": "INR 58/Meter",
-  "currency": "INR",
-  "unit": "Meter",
-  "contactActionAvailable": true,
-  "gstVerified": true,
-  "mobileVerified": true,
-  "emailVerified": true,
-  "scrapedAt": "2026-06-12T20:17:33.721Z"
+  "keywords": ["cotton fabric"],
+  "location": "",
+  "maxResults": 5,
+  "includeOrganic": true,
+  "includeSponsored": true,
+  "proxyConfiguration": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "apifyProxyCountry": "IN"
+  }
 }
 ```
 
-## How It Works
+## Example Output
 
-The actor builds public IndiaMART category URLs from your keywords, fetches the category HTML, parses embedded sponsored supplier data and visible organic product cards, deduplicates clean supplier/product leads, then saves records to the Apify Dataset.
+```json
+{
+  "sourceType": "organic",
+  "keyword": "cotton fabric",
+  "categoryName": "Cotton Fabric",
+  "sourceListingId": "dispId23205079862",
+  "productName": "Plain Cotton Fabric",
+  "companyName": "Example Textiles Private Limited",
+  "city": "Ludhiana",
+  "state": "Punjab",
+  "productUrl": "https://www.indiamart.com/proddetail/plain-cotton-fabric-23205079862.html",
+  "companyUrl": "https://www.example-textiles.com/",
+  "imageUrl": "https://5.imimg.com/data5/example-500x500.jpg",
+  "price": "INR 130/Meter",
+  "currency": "INR",
+  "unit": "Meter",
+  "supplierBadge": "Leading Supplier",
+  "trustBadges": ["Verified Exporter", "9 yrs"],
+  "rating": 3.9,
+  "ratingCount": 793,
+  "gstVerified": true,
+  "contactActionAvailable": true,
+  "scrapedAt": "2026-07-13T00:00:00.000Z"
+}
+```
+
+Example values are illustrative. Actual output comes from the live public source.
+
+## Billing and Spending Limits
+
+The Actor keeps the existing Pay Per Event price of `$0.003` per saved `supplier-scraped` record. Each row is saved and charged atomically. Failed requests, blocked pages, invalid categories, and empty responses do not trigger the primary event. The run stops immediately when the user's spending limit is reached.
+
+## Use Cases
+
+- Compare public product and price signals by category
+- Build auditable supplier shortlists for sourcing research
+- Monitor category coverage, MOQ, and verification badges
+- Feed structured public business-listing facts into spreadsheets, reports, APIs, and AI workflows
 
 ## Known Limits
 
-- This actor uses public category pages, not private IndiaMART lead APIs.
-- This actor outputs only non-personal business listing facts. It does not extract phone numbers, emails, GST numbers, or personal contact details; verification fields are boolean badges only.
-- Some keywords may not map to a valid IndiaMART category slug. Try the product category wording used on IndiaMART.
-- IndiaMART can change page markup or anti-bot behavior without notice.
-- Location pages depend on IndiaMART URL availability for that city/category pair.
+- IndiaMART may change its category markup or anti-bot behavior without notice.
+- Some keywords do not map directly to an IndiaMART category slug.
+- Prices, MOQ, ratings, and badges are returned only when present on the source page.
+- City/category URL combinations depend on IndiaMART's public URL structure.
+- This Actor is not affiliated with IndiaMART.
 
 ## Responsible Use
 
-This Actor is intended for lawful collection of publicly available information only. Users are responsible for ensuring their use complies with the source website's terms, robots.txt, applicable privacy laws, including India's DPDP Act, and all local regulations.
-
-Do not use this Actor to collect, store, sell, or misuse personal data without a lawful basis. The Actor author is not responsible for misuse by end users.
+Use this Actor only for lawful collection of public, non-personal business-listing information. Follow IndiaMART's terms, robots.txt, applicable privacy laws, India's DPDP Act, and local regulations. Do not use the output for spam, harassment, or unlawful profiling.
 
 ## License
 
-Apache-2.0
+Apache-2.0. See `LICENSE`.

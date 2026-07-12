@@ -16,19 +16,21 @@ export async function scrapeIndiaMartSuppliers(
         if (records.length >= input.maxResults) break;
 
         const categoryUrl = buildCategoryUrl(keyword, input.location);
-        const html = await fetchPage(categoryUrl, options);
-        if (isBlockedPage(html)) {
-            throw new Error(`IndiaMART blocked category page: ${categoryUrl}`);
+        let candidates: SupplierLeadRecord[] = [];
+        try {
+            const html = await fetchPage(categoryUrl, options);
+            if (isBlockedPage(html)) throw new Error('blocked or challenge page returned');
+            candidates = parseIndiaMartPage(
+                html,
+                keyword,
+                categoryUrl,
+                input.includeOrganic,
+                input.includeSponsored,
+            );
+        } catch (error) {
+            console.warn(`Skipping IndiaMART category ${categoryUrl}: ${(error as Error).message}`);
+            continue;
         }
-
-        const $ = cheerio.load(html);
-        const categoryName = extractCategoryName($, keyword);
-        const scrapedAt = new Date().toISOString();
-
-        const candidates = [
-            ...(input.includeSponsored ? parseSponsoredData(html, keyword, categoryName, categoryUrl, scrapedAt) : []),
-            ...(input.includeOrganic ? parseOrganicCards($, keyword, categoryName, categoryUrl, scrapedAt) : []),
-        ];
 
         for (const record of candidates) {
             if (!isChargeableRecord(record)) continue;
@@ -50,6 +52,22 @@ export async function scrapeIndiaMartSuppliers(
     }
 
     return records;
+}
+
+export function parseIndiaMartPage(
+    html: string,
+    keyword: string,
+    categoryUrl: string,
+    includeOrganic = true,
+    includeSponsored = true,
+    scrapedAt = new Date().toISOString(),
+): SupplierLeadRecord[] {
+    const $ = cheerio.load(html);
+    const categoryName = extractCategoryName($, keyword);
+    return [
+        ...(includeSponsored ? parseSponsoredData(html, keyword, categoryName, categoryUrl, scrapedAt) : []),
+        ...(includeOrganic ? parseOrganicCards($, keyword, categoryName, categoryUrl, scrapedAt) : []),
+    ].filter(isChargeableRecord).map(compactRecord);
 }
 
 export function buildCategoryUrl(keyword: string, location: string): string {
@@ -112,7 +130,6 @@ function parseSponsoredData(
             companyName: companyName ?? '',
             city: city ?? '',
             state: cleanText(item.STATE_NAME) ?? undefined,
-            address: cleanText(item.LONG_ADDRESS ?? item.SHORT_ADDRESS) ?? undefined,
             companyUrl: normalizeUrl(item.COMPANY_URL) ?? undefined,
             productUrl: productUrl ?? undefined,
             imageUrl: normalizeUrl(item.IMAGE_500X500 ?? item.IMAGE_250X250 ?? item.IMAGE_ORIGINAL) ?? undefined,
@@ -262,11 +279,11 @@ function extractCategoryName($: CheerioAPI, fallback: string): string {
     return title.split('-')[0]?.trim() || toTitleCase(fallback);
 }
 
-function isBlockedPage(html: string): boolean {
+export function isBlockedPage(html: string): boolean {
     return /captcha|access denied|forbidden|verify you are|unusual traffic|cloudflare|akamai/i.test(html);
 }
 
-function isChargeableRecord(record: SupplierLeadRecord): boolean {
+export function isChargeableRecord(record: SupplierLeadRecord): boolean {
     return Boolean(record.productName && record.companyName && record.city && (record.productUrl || record.companyUrl));
 }
 
