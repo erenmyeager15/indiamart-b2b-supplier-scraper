@@ -4,6 +4,10 @@ Extract structured product and supplier listing facts from public IndiaMART page
 
 No login or API key is required. The Actor does not extract phone numbers, email addresses, GST numbers, or personal contact details.
 
+## Live Output Example
+
+[View a public enriched IndiaMART supplier result](https://api.apify.com/v2/datasets/Sad1gN9HPEtuWMMtg/items?format=html&clean=true&limit=1). It demonstrates a real product, supplier, price, currency, source URL, seven specifications, and `detailStatus: enriched`.
+
 ## What It Extracts
 
 - Product and company names
