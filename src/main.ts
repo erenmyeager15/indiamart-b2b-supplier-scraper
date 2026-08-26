@@ -70,8 +70,11 @@ try {
         await Actor.setStatusMessage(`Saved ${pushed} IndiaMART supplier/product record(s).`);
     }
     console.log(`Finished. Saved ${pushed} supplier/product record(s).`);
-} finally {
     await Actor.exit();
+} catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('IndiaMART Actor failed', { message });
+    await Actor.fail(message);
 }
 
 function normalizeInput(rawInput: Partial<ActorInput>): ActorInput {

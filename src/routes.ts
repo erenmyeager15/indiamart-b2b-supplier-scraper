@@ -11,6 +11,7 @@ export async function scrapeIndiaMartSuppliers(
 ): Promise<SupplierLeadRecord[]> {
     const seen = new Set<string>();
     const records: SupplierLeadRecord[] = [];
+    let failedRequests = 0;
 
     for (const keyword of input.keywords) {
         if (records.length >= input.maxResults) break;
@@ -28,6 +29,7 @@ export async function scrapeIndiaMartSuppliers(
                 input.includeSponsored,
             );
         } catch (error) {
+            failedRequests += 1;
             console.warn(`Skipping IndiaMART category ${categoryUrl}: ${(error as Error).message}`);
             continue;
         }
@@ -49,6 +51,10 @@ export async function scrapeIndiaMartSuppliers(
         }
 
         await delay(700);
+    }
+
+    if (records.length === 0 && failedRequests === input.keywords.length) {
+        throw new Error(`All ${failedRequests} IndiaMART request(s) failed or were blocked after retries.`);
     }
 
     return records;
