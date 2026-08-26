@@ -70,10 +70,128 @@ export function parseIndiaMartPage(
 ): SupplierLeadRecord[] {
     const $ = cheerio.load(html);
     const categoryName = extractCategoryName($, keyword);
-    return [
+    const records = [
         ...(includeSponsored ? parseSponsoredData(html, keyword, categoryName, categoryUrl, scrapedAt) : []),
         ...(includeOrganic ? parseOrganicCards($, keyword, categoryName, categoryUrl, scrapedAt) : []),
+        ...(includeOrganic ? parseEmbeddedBusinessData(html, keyword, categoryName, categoryUrl, scrapedAt) : []),
     ].filter(isChargeableRecord).map(compactRecord);
+
+    const seen = new Set<string>();
+    return records.filter((record) => {
+        const key = record.sourceListingId || record.productUrl || `${record.companyName}|${record.productName}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+function parseEmbeddedBusinessData(
+    html: string,
+    keyword: string,
+    categoryName: string,
+    categoryUrl: string,
+    scrapedAt: string,
+): SupplierLeadRecord[] {
+    const candidates = [
+        ...extractJsonObjectsContaining(html, '"COMPANYNAME"'),
+        ...extractJsonObjectsContaining(html, '"companyName"'),
+        ...extractJsonObjectsContaining(html, '"sellerName"'),
+    ];
+
+    return candidates.map((item, index) => compactRecord({
+        sourceType: 'organic' as const,
+        keyword,
+        categoryName: firstText(item, ['GLCAT_MCAT_NAME', 'categoryName', 'category_name']) ?? categoryName,
+        categoryUrl,
+        sourceListingId: firstText(item, ['DISPLAY_ID', 'ITEM_ID', 'itemId', 'productId', 'id'])
+            ?? extractProductId(firstText(item, ['PC_ITEM_URL', 'PDP_URL', 'productUrl', 'product_url', 'url']))
+            ?? `embedded-${index}`,
+        productName: firstText(item, ['PC_ITEM_DISPLAY_NAME', 'ITEM_NAME', 'productName', 'product_name', 'itemName', 'title']) ?? '',
+        companyName: firstText(item, ['COMPANYNAME', 'companyName', 'company_name', 'sellerName', 'supplierName']) ?? '',
+        city: firstText(item, ['CITY_NAME', 'cityName', 'city_name', 'city', 'location']) ?? '',
+        state: firstText(item, ['STATE_NAME', 'stateName', 'state_name', 'state']),
+        companyUrl: normalizeUrl(firstText(item, ['COMPANY_URL', 'companyUrl', 'company_url', 'sellerUrl'])) ?? undefined,
+        productUrl: normalizeUrl(firstText(item, ['PC_ITEM_URL', 'PDP_URL', 'productUrl', 'product_url', 'url'])) ?? undefined,
+        imageUrl: normalizeUrl(firstText(item, ['IMAGE_500X500', 'IMAGE_250X250', 'IMAGE_ORIGINAL', 'imageUrl', 'image_url'])) ?? undefined,
+        price: normalizePrice(firstText(item, ['PRICE_SEO', 'PRICE_F', 'priceText', 'price'])) ?? undefined,
+        currency: firstText(item, ['CURRENCY', 'currency', 'priceCurrency']),
+        unit: firstText(item, ['UNIT', 'unit', 'unitText']),
+        minOrderQuantity: firstText(item, ['PRD_SEARCH_MIN_ORDER_QUANTITY', 'minOrderQuantity', 'moq']),
+        gstVerified: firstBoolean(item, ['GST_VERIFIED_FLAG', 'gstVerified']),
+        scrapedAt,
+    })).filter(isChargeableRecord);
+}
+
+function extractJsonObjectsContaining(source: string, marker: string): Array<Record<string, unknown>> {
+    const objects: Array<Record<string, unknown>> = [];
+    let markerIndex = source.indexOf(marker);
+
+    while (markerIndex >= 0 && objects.length < 100) {
+        let start = source.lastIndexOf('{', markerIndex);
+        const minimumStart = Math.max(0, markerIndex - 50_000);
+
+        while (start >= minimumStart) {
+            const candidate = readBalancedJsonObject(source, start);
+            if (candidate && candidate.end >= markerIndex) {
+                try {
+                    const value = JSON.parse(candidate.text) as unknown;
+                    if (value && typeof value === 'object' && !Array.isArray(value)) {
+                        objects.push(value as Record<string, unknown>);
+                        break;
+                    }
+                } catch {
+                    // Try the next enclosing object.
+                }
+            }
+            start = source.lastIndexOf('{', start - 1);
+        }
+
+        markerIndex = source.indexOf(marker, markerIndex + marker.length);
+    }
+
+    return objects;
+}
+
+function readBalancedJsonObject(source: string, start: number): { text: string; end: number } | undefined {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let index = start; index < source.length; index += 1) {
+        const character = source[index];
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (character === '\\' && inString) {
+            escaped = true;
+            continue;
+        }
+        if (character === '"') inString = !inString;
+        if (inString) continue;
+        if (character === '{') depth += 1;
+        if (character === '}') depth -= 1;
+        if (depth === 0) return { text: source.slice(start, index + 1), end: index };
+    }
+    return undefined;
+}
+
+function firstText(item: Record<string, unknown>, keys: string[]): string | undefined {
+    for (const key of keys) {
+        const value = item[key];
+        if (typeof value === 'string' || typeof value === 'number') {
+            const text = cleanText(String(value));
+            if (text) return text;
+        }
+    }
+    return undefined;
+}
+
+function firstBoolean(item: Record<string, unknown>, keys: string[]): boolean | undefined {
+    for (const key of keys) {
+        if (key in item) return toBoolean(item[key]);
+    }
+    return undefined;
 }
 
 export function buildCategoryUrl(keyword: string, location: string): string {

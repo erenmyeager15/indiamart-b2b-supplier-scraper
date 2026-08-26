@@ -103,4 +103,32 @@ describe('IndiaMART page parser', () => {
         expect(records).toHaveLength(1);
         expect(records[0].sourceType).toBe('sponsored');
     });
+
+    it('recovers business records from renamed embedded listing data', () => {
+        const embeddedHtml = `
+            <html><head><title>Cotton Fabric - IndiaMART</title></head><body><script>
+            window.listingState = {"items":[{"productId":"789","productName":"Printed Cotton Fabric",
+            "companyName":"Modern Textiles","cityName":"Surat","stateName":"Gujarat",
+            "productUrl":"https://www.indiamart.com/proddetail/printed-cotton-fabric-789.html",
+            "companyUrl":"https://www.indiamart.com/modern-textiles/","priceText":"Rs. 80 / Meter"}]};
+            </script></body></html>`;
+
+        const records = parseIndiaMartPage(
+            embeddedHtml,
+            'cotton fabric',
+            'https://dir.indiamart.com/impcat/cotton-fabric.html',
+            true,
+            true,
+            '2026-08-26T00:00:00.000Z',
+        );
+
+        expect(records).toHaveLength(1);
+        expect(records[0]).toMatchObject({
+            productName: 'Printed Cotton Fabric',
+            companyName: 'Modern Textiles',
+            city: 'Surat',
+            state: 'Gujarat',
+            price: 'INR 80/Meter',
+        });
+    });
 });
