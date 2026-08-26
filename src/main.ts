@@ -5,13 +5,16 @@ import { isChargeableRecord, scrapeIndiaMartSuppliers } from './routes.js';
 import type { ActorInput, FetchOptions } from './types.js';
 
 const SUPPLIER_SCRAPED_EVENT = 'supplier-scraped';
+const SUPPLIER_ENRICHED_EVENT = 'supplier-enriched';
 
 const DEFAULT_INPUT: ActorInput = {
     keywords: ['cotton fabric'],
     location: '',
+    locations: [],
     maxResults: 5,
     includeOrganic: true,
     includeSponsored: true,
+    includeDetails: false,
     proxyConfiguration: {
         useApifyProxy: true,
         apifyProxyGroups: ['RESIDENTIAL'],
@@ -29,9 +32,11 @@ try {
     console.log('IndiaMART B2B Supplier Scraper started', {
         keywords: input.keywords,
         location: input.location,
+        locations: input.locations,
         maxResults: input.maxResults,
         includeOrganic: input.includeOrganic,
         includeSponsored: input.includeSponsored,
+        includeDetails: input.includeDetails,
     });
 
     const records = await scrapeIndiaMartSuppliers(input, fetchOptions);
@@ -48,7 +53,8 @@ try {
     for (const record of records) {
         if (!isChargeableRecord(record)) continue;
 
-        const chargeResult = await Actor.pushData(record, SUPPLIER_SCRAPED_EVENT);
+        const eventName = record.detailStatus === 'enriched' ? SUPPLIER_ENRICHED_EVENT : SUPPLIER_SCRAPED_EVENT;
+        const chargeResult = await Actor.pushData(record, eventName);
         const decision = interpretChargeResult(chargeResult);
         if (decision.recordWasSaved) pushed++;
 
@@ -84,11 +90,13 @@ function normalizeInput(rawInput: Partial<ActorInput>): ActorInput {
     return {
         keywords,
         location: String(rawInput.location ?? DEFAULT_INPUT.location).trim(),
+        locations: normalizeStringList(rawInput.locations, DEFAULT_INPUT.locations).slice(0, 20),
         maxResults: normalizeInteger(rawInput.maxResults, DEFAULT_INPUT.maxResults, 1, 1000),
         includeOrganic: typeof rawInput.includeOrganic === 'boolean' ? rawInput.includeOrganic : DEFAULT_INPUT.includeOrganic,
         includeSponsored: typeof rawInput.includeSponsored === 'boolean'
             ? rawInput.includeSponsored
             : DEFAULT_INPUT.includeSponsored,
+        includeDetails: typeof rawInput.includeDetails === 'boolean' ? rawInput.includeDetails : DEFAULT_INPUT.includeDetails,
         proxyConfiguration: rawInput.proxyConfiguration ?? DEFAULT_INPUT.proxyConfiguration,
     };
 }

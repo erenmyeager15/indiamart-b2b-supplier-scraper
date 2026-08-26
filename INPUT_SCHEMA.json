@@ -16,12 +16,22 @@
             }
         },
         "location": {
-            "title": "Location",
-            "description": "Optional city filter, for example Mumbai or Jaipur. Leave empty for all-India category pages.",
+            "title": "Single Location (legacy)",
+            "description": "Optional single city retained for existing integrations. The Locations list below takes priority when supplied.",
             "type": "string",
             "editor": "textfield",
             "default": "",
             "prefill": ""
+        },
+        "locations": {
+            "title": "Locations for Deeper Coverage",
+            "description": "Optional cities to fan out each keyword across, for example Surat, Jaipur, and Mumbai. This produces broader coverage while deduplicating suppliers.",
+            "type": "array",
+            "editor": "stringList",
+            "default": [],
+            "prefill": [],
+            "items": { "type": "string" },
+            "maxItems": 20
         },
         "maxResults": {
             "title": "Max Results",
@@ -48,6 +58,14 @@
             "editor": "checkbox",
             "default": true,
             "prefill": true
+        },
+        "includeDetails": {
+            "title": "Enrich Public Product Details",
+            "description": "Open each public product/company page for additional specifications, ratings, public business address, and clearly labelled official company website when available. Personal phone numbers and emails are never collected.",
+            "type": "boolean",
+            "editor": "checkbox",
+            "default": false,
+            "prefill": false
         },
         "proxyConfiguration": {
             "title": "Proxy Configuration",

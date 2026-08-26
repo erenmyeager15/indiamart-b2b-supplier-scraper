@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { interpretChargeResult } from './billing.js';
-import { buildCategoryUrl, isBlockedPage, parseIndiaMartPage } from './routes.js';
+import { buildCategoryUrl, isBlockedPage, parseIndiaMartDetailPage, parseIndiaMartPage } from './routes.js';
 
 describe('atomic billing decisions', () => {
     it('counts a charged saved row', () => {
@@ -130,5 +130,44 @@ describe('IndiaMART page parser', () => {
             state: 'Gujarat',
             price: 'INR 80/Meter',
         });
+    });
+
+    it('enriches public business facts without copying personal contact fields', () => {
+        const detailHtml = `
+          <html><body>
+            <script type="application/ld+json">{
+              "@type":"Product","name":"Premium Cotton Fabric",
+              "url":"https://www.indiamart.com/proddetail/premium-cotton-fabric-789.html",
+              "aggregateRating":{"ratingValue":"4.6","ratingCount":"245"},
+              "additionalProperty":[
+                {"@type":"PropertyValue","name":"GSM","value":"180"},
+                {"@type":"PropertyValue","name":"Contact Person","value":"Private Name"}
+              ]
+            }</script>
+            <script type="application/ld+json">{
+              "@type":"Organization","name":"Modern Textiles",
+              "telephone":"+91 9999999999","email":"private@example.com",
+              "address":{"streetAddress":"Textile Market","addressLocality":"Surat","addressRegion":"Gujarat","postalCode":"395002"}
+            }</script>
+            <a href="https://moderntextiles.example/about">Visit company website</a>
+          </body></html>`;
+        const record = parseIndiaMartDetailPage(detailHtml, {
+            sourceType: 'organic', keyword: 'cotton fabric', categoryName: 'Cotton Fabric',
+            categoryUrl: 'https://dir.indiamart.com/impcat/cotton-fabric.html', sourceListingId: '789',
+            productName: 'Cotton Fabric', companyName: 'Modern Textiles', city: 'Surat',
+            productUrl: 'https://www.indiamart.com/proddetail/cotton-fabric-789.html',
+            scrapedAt: '2026-08-26T00:00:00.000Z', detailStatus: 'listing-only',
+        });
+
+        expect(record).toMatchObject({
+            productName: 'Premium Cotton Fabric', rating: 4.6, ratingCount: 245,
+            publicBusinessAddress: 'Textile Market, Surat, Gujarat, 395002',
+            officialWebsite: 'https://moderntextiles.example/about',
+            officialDomain: 'moderntextiles.example', detailStatus: 'enriched',
+            specifications: { GSM: '180' },
+        });
+        expect(JSON.stringify(record)).not.toContain('9999999999');
+        expect(JSON.stringify(record)).not.toContain('private@example.com');
+        expect(JSON.stringify(record)).not.toContain('Private Name');
     });
 });

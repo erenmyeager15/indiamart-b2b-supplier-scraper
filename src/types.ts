@@ -1,9 +1,11 @@
 export interface ActorInput {
     keywords: string[];
     location: string;
+    locations: string[];
     maxResults: number;
     includeOrganic: boolean;
     includeSponsored: boolean;
+    includeDetails: boolean;
     proxyConfiguration?: {
         useApifyProxy?: boolean;
         apifyProxyGroups?: string[];
@@ -40,6 +42,10 @@ export interface SupplierLeadRecord {
     emailVerified?: boolean;
     minOrderQuantity?: string;
     specifications?: Record<string, string>;
+    publicBusinessAddress?: string;
+    officialWebsite?: string;
+    officialDomain?: string;
+    detailStatus?: 'listing-only' | 'enriched';
 }
 
 export interface FetchOptions {

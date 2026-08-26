@@ -12,52 +12,154 @@ export async function scrapeIndiaMartSuppliers(
     const seen = new Set<string>();
     const records: SupplierLeadRecord[] = [];
     let failedRequests = 0;
+    let totalRequests = 0;
+    const locations = input.locations.length > 0
+        ? input.locations
+        : [input.location];
 
     for (const keyword of input.keywords) {
         if (records.length >= input.maxResults) break;
-
-        const categoryUrl = buildCategoryUrl(keyword, input.location);
-        let candidates: SupplierLeadRecord[] = [];
-        try {
-            const html = await fetchPage(categoryUrl, options);
-            if (isBlockedPage(html)) throw new Error('blocked or challenge page returned');
-            candidates = parseIndiaMartPage(
-                html,
-                keyword,
-                categoryUrl,
-                input.includeOrganic,
-                input.includeSponsored,
-            );
-        } catch (error) {
-            failedRequests += 1;
-            console.warn(`Skipping IndiaMART category ${categoryUrl}: ${(error as Error).message}`);
-            continue;
-        }
-
-        for (const record of candidates) {
-            if (!isChargeableRecord(record)) continue;
-
-            const dedupeKey = [
-                normalizeKey(record.companyUrl ?? record.companyName),
-                normalizeKey(record.productName),
-                normalizeKey(record.city),
-            ].join('|');
-
-            if (seen.has(dedupeKey)) continue;
-            seen.add(dedupeKey);
-
-            records.push(compactRecord(record));
+        for (const location of locations) {
             if (records.length >= input.maxResults) break;
-        }
+            const categoryUrl = buildCategoryUrl(keyword, location);
+            let candidates: SupplierLeadRecord[] = [];
+            totalRequests += 1;
+            try {
+                const html = await fetchPage(categoryUrl, options);
+                if (isBlockedPage(html)) throw new Error('blocked or challenge page returned');
+                candidates = parseIndiaMartPage(
+                    html,
+                    keyword,
+                    categoryUrl,
+                    input.includeOrganic,
+                    input.includeSponsored,
+                );
+            } catch (error) {
+                failedRequests += 1;
+                console.warn(`Skipping IndiaMART category ${categoryUrl}: ${(error as Error).message}`);
+                continue;
+            }
 
-        await delay(700);
+            for (const candidate of candidates) {
+                if (!isChargeableRecord(candidate)) continue;
+                const dedupeKey = [
+                    normalizeKey(candidate.companyUrl ?? candidate.companyName),
+                    normalizeKey(candidate.productName),
+                    normalizeKey(candidate.city),
+                ].join('|');
+                if (seen.has(dedupeKey)) continue;
+                seen.add(dedupeKey);
+
+                let record: SupplierLeadRecord = compactRecord({ ...candidate, detailStatus: 'listing-only' as const });
+                if (input.includeDetails) {
+                    record = await enrichSupplierRecord(record, options);
+                }
+                records.push(compactRecord(record));
+                if (records.length >= input.maxResults) break;
+            }
+            await delay(250);
+        }
     }
 
-    if (records.length === 0 && failedRequests === input.keywords.length) {
+    if (records.length === 0 && totalRequests > 0 && failedRequests === totalRequests) {
         throw new Error(`All ${failedRequests} IndiaMART request(s) failed or were blocked after retries.`);
     }
 
     return records;
+}
+
+async function enrichSupplierRecord(record: SupplierLeadRecord, options: FetchOptions): Promise<SupplierLeadRecord> {
+    const detailUrl = record.productUrl ?? record.companyUrl;
+    if (!detailUrl) return record;
+    try {
+        const html = await fetchPage(detailUrl, options);
+        if (isBlockedPage(html)) throw new Error('blocked or challenge page returned');
+        return parseIndiaMartDetailPage(html, record);
+    } catch (error) {
+        console.warn(`Keeping listing-only IndiaMART row after detail request failed: ${(error as Error).message}`);
+        return record;
+    }
+}
+
+export function parseIndiaMartDetailPage(html: string, base: SupplierLeadRecord): SupplierLeadRecord {
+    const $ = cheerio.load(html);
+    const merged: SupplierLeadRecord = { ...base };
+    const before = enrichmentFingerprint(base);
+    const jsonLd: unknown[] = [];
+    $('script[type="application/ld+json"]').each((_index, element) => {
+        try {
+            jsonLd.push(JSON.parse($(element).text()));
+        } catch {
+            // Ignore malformed structured data and continue with public page metadata.
+        }
+    });
+
+    const visit = (node: unknown): void => {
+        if (!node) return;
+        if (Array.isArray(node)) {
+            node.forEach(visit);
+            return;
+        }
+        if (typeof node !== 'object') return;
+        const value = node as Record<string, unknown>;
+        visit(value['@graph']);
+        visit(value.itemListElement);
+        visit(value.item);
+
+        const type = (Array.isArray(value['@type']) ? value['@type'] : [value['@type']])
+            .map((item) => String(item ?? '').toLowerCase());
+        if (type.some((item) => item.includes('product'))) {
+            merged.productName = firstText(value, ['name']) ?? merged.productName;
+            merged.productUrl = normalizeUrl(firstText(value, ['url'])) ?? merged.productUrl;
+            merged.imageUrl = normalizeUrl(Array.isArray(value.image) ? String(value.image[0]) : firstText(value, ['image'])) ?? merged.imageUrl;
+            const offers = (Array.isArray(value.offers) ? value.offers[0] : value.offers) as Record<string, unknown> | undefined;
+            merged.price = normalizePrice(firstText(offers ?? {}, ['price', 'priceSpecification'])) ?? merged.price;
+            merged.currency = firstText(offers ?? {}, ['priceCurrency']) ?? merged.currency;
+            const aggregate = value.aggregateRating as Record<string, unknown> | undefined;
+            merged.rating = parseOptionalNumber(firstText(aggregate ?? {}, ['ratingValue'])) ?? merged.rating;
+            merged.ratingCount = parseOptionalInteger(firstText(aggregate ?? {}, ['ratingCount', 'reviewCount'])) ?? merged.ratingCount;
+            merged.specifications = mergeSpecifications(merged.specifications, parseAdditionalProperties(value.additionalProperty));
+        }
+        if (type.some((item) => item.includes('organization') || item.includes('localbusiness'))) {
+            merged.companyName = firstText(value, ['name']) ?? merged.companyName;
+            merged.publicBusinessAddress = normalizePublicAddress(value.address) ?? merged.publicBusinessAddress;
+        }
+    };
+    jsonLd.forEach(visit);
+
+    const pageSpecs: Record<string, string> = {};
+    $('table tr, .specifications tr, .prd-spec tr').each((_index, element) => {
+        const cells = $(element).find('th,td').map((_cellIndex, cell) => cleanText($(cell).text())).get().filter(Boolean);
+        if (cells.length >= 2 && isSafeBusinessField(cells[0]!)) pageSpecs[cells[0]!] = cells[1]!;
+    });
+    merged.specifications = mergeSpecifications(merged.specifications, pageSpecs);
+
+    const officialWebsite = $('a[href^="http"]')
+        .map((_index, element) => ({ href: $(element).attr('href'), label: cleanText($(element).text()) }))
+        .get()
+        .find((item) => item.href && /website|visit site|company site/i.test(item.label ?? '') && isExternalBusinessUrl(item.href));
+    if (officialWebsite?.href) {
+        merged.officialWebsite = normalizeUrl(officialWebsite.href);
+        merged.officialDomain = merged.officialWebsite ? new URL(merged.officialWebsite).hostname.replace(/^www\./, '') : undefined;
+    }
+
+    merged.detailStatus = enrichmentFingerprint(merged) !== before ? 'enriched' : 'listing-only';
+    return compactRecord(merged);
+}
+
+function enrichmentFingerprint(record: SupplierLeadRecord): string {
+    return JSON.stringify({
+        state: record.state,
+        minOrderQuantity: record.minOrderQuantity,
+        rating: record.rating,
+        ratingCount: record.ratingCount,
+        supplierBadge: record.supplierBadge,
+        trustBadges: record.trustBadges,
+        specifications: record.specifications,
+        publicBusinessAddress: record.publicBusinessAddress,
+        officialWebsite: record.officialWebsite,
+        officialDomain: record.officialDomain,
+    });
 }
 
 export function parseIndiaMartPage(
@@ -360,6 +462,67 @@ function normalizeSpecifications(value: unknown): Record<string, string> | undef
     }
 
     return Object.keys(specs).length > 0 ? specs : undefined;
+}
+
+function parseAdditionalProperties(value: unknown): Record<string, string> | undefined {
+    const items = Array.isArray(value) ? value : value ? [value] : [];
+    const specs: Record<string, string> = {};
+    for (const item of items) {
+        if (!item || typeof item !== 'object') continue;
+        const property = item as Record<string, unknown>;
+        const label = firstText(property, ['name', 'propertyID']);
+        const text = firstText(property, ['value', 'valueReference']);
+        if (label && text && isSafeBusinessField(label)) specs[label] = text;
+    }
+    return Object.keys(specs).length > 0 ? specs : undefined;
+}
+
+function mergeSpecifications(
+    first: Record<string, string> | undefined,
+    second: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+    const merged = { ...(first ?? {}), ...(second ?? {}) };
+    for (const key of Object.keys(merged)) {
+        if (!isSafeBusinessField(key)) delete merged[key];
+    }
+    return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+function normalizePublicAddress(value: unknown): string | undefined {
+    if (typeof value === 'string') return cleanText(value);
+    if (!value || typeof value !== 'object') return undefined;
+    const address = value as Record<string, unknown>;
+    return cleanText([
+        address.streetAddress,
+        address.addressLocality,
+        address.addressRegion,
+        address.postalCode,
+        address.addressCountry,
+    ].filter(Boolean).map(String).join(', '));
+}
+
+function isSafeBusinessField(label: string): boolean {
+    return !/(phone|mobile|email|contact\s*person|owner|director|proprietor|ceo|whatsapp|fax)/i.test(label);
+}
+
+function isExternalBusinessUrl(value: string): boolean {
+    try {
+        const host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+        return !host.endsWith('indiamart.com')
+            && !/(facebook|instagram|linkedin|twitter|x\.com|youtube|whatsapp|wa\.me)$/.test(host);
+    } catch {
+        return false;
+    }
+}
+
+function parseOptionalNumber(value: string | undefined): number | undefined {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseOptionalInteger(value: string | undefined): number | undefined {
+    const parsed = Number.parseInt(value?.replace(/,/g, '') ?? '', 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function extractJsonArray<T>(source: string, marker: string): T[] {

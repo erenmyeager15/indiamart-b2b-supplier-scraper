@@ -20,10 +20,17 @@
           "isOneTimeEvent": true
         },
         "supplier-scraped": {
-          "eventTitle": "Supplier scraped",
-          "eventDescription": "Charged once for each clean IndiaMART product and supplier record saved atomically to the dataset.",
-          "eventPriceUsd": 0.003,
+          "eventTitle": "Supplier listing scraped",
+          "eventDescription": "Charged once for each clean listing-level IndiaMART product and supplier record saved atomically.",
+          "eventPriceUsd": 0.002,
           "isPrimaryEvent": true,
+          "isOneTimeEvent": false
+        },
+        "supplier-enriched": {
+          "eventTitle": "Supplier listing enriched",
+          "eventDescription": "Charged once for each clean IndiaMART record enriched from its public product or company detail page.",
+          "eventPriceUsd": 0.004,
+          "isPrimaryEvent": false,
           "isOneTimeEvent": false
         }
       }
@@ -38,7 +45,7 @@
     "timeoutSecs": 300
   },
   "exampleRunInput": {
-    "body": "{\n  \"keywords\": [\"cotton fabric\"],\n  \"location\": \"\",\n  \"maxResults\": 5,\n  \"includeOrganic\": true,\n  \"includeSponsored\": true,\n  \"proxyConfiguration\": {\n    \"useApifyProxy\": true,\n    \"apifyProxyGroups\": [\"RESIDENTIAL\"],\n    \"apifyProxyCountry\": \"IN\"\n  }\n}",
+    "body": "{\n  \"keywords\": [\"cotton fabric\"],\n  \"locations\": [\"Surat\", \"Jaipur\"],\n  \"maxResults\": 5,\n  \"includeOrganic\": true,\n  \"includeSponsored\": true,\n  \"includeDetails\": false,\n  \"proxyConfiguration\": {\n    \"useApifyProxy\": true,\n    \"apifyProxyGroups\": [\"RESIDENTIAL\"],\n    \"apifyProxyCountry\": \"IN\"\n  }\n}",
     "contentType": "application/json; charset=utf-8"
   },
   "storages": {

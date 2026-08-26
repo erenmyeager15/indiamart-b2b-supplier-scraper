@@ -24,6 +24,11 @@
           "keyword",
           "productUrl",
           "companyUrl",
+          "publicBusinessAddress",
+          "officialWebsite",
+          "officialDomain",
+          "specifications",
+          "detailStatus",
           "scrapedAt"
         ]
       },
@@ -45,6 +50,11 @@
           "keyword": { "label": "Keyword", "format": "text" },
           "productUrl": { "label": "Product URL", "format": "link" },
           "companyUrl": { "label": "Company URL", "format": "link" },
+          "publicBusinessAddress": { "label": "Public Business Address", "format": "text" },
+          "officialWebsite": { "label": "Official Website", "format": "link" },
+          "officialDomain": { "label": "Official Domain", "format": "text" },
+          "specifications": { "label": "Specifications" },
+          "detailStatus": { "label": "Detail Status", "format": "text" },
           "scrapedAt": { "label": "Scraped At", "format": "date" }
         }
       }
