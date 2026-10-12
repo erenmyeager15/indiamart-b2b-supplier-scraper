@@ -1,6 +1,6 @@
 # IndiaMART Product & Supplier Scraper
 
-Extract structured product and supplier listing facts from public IndiaMART pages. Search by category keyword, fan out across optional city lists for deeper coverage, and optionally enrich each row from its public product or company page.
+Build an evidence-based supplier shortlist for sourcing from India. This IndiaMART product and supplier scraper extracts public prices, minimum order quantities (MOQ), specifications, ratings and verification badges. Search by category keyword, compare optional Indian city lists, and enrich available business details from public product or company pages.
 
 No login or API key is required. The Actor does not extract phone numbers, email addresses, GST numbers, or personal contact details.
 
@@ -89,9 +89,19 @@ Missing source values are omitted. The Actor never invents prices, ratings, veri
 
 Example values are illustrative. Actual output comes from the live public source.
 
-## Billing and Spending Limits
+## Pricing and Spending Limits: Supplier Results + Actor Start
 
-The Actor uses Pay Per Event pricing: `$0.002` for a clean listing-only `supplier-scraped` row and `$0.004` only when `includeDetails` produces a materially enriched `supplier-enriched` row. If a detail request adds nothing, the row stays listing-only and uses the lower event. Each row is saved and charged atomically. Failed requests, blocked pages, invalid categories, and empty responses do not trigger a result event.
+The Actor uses Pay Per Event pricing:
+
+| Event | Price | When charged |
+| --- | ---: | --- |
+| `supplier-scraped` | `$0.002` per listing-only row, or `$2.00` per 1,000 | A clean listing record is saved |
+| `supplier-enriched` | `$0.004` per enriched row, or `$4.00` per 1,000 | `includeDetails` produces a materially enriched saved record |
+| `apify-actor-start` | `$0.00005` per GB, minimum one event | The Actor starts |
+
+Each saved row uses one result event: listing-only **or** materially enriched, not both. If a detail request adds nothing, the row stays listing-only and uses the lower event. Each row is saved and charged atomically. Failed requests, blocked pages, invalid categories and empty responses do not trigger a result event; rows already saved before a partial failure remain charged.
+
+The Actor Start fee still applies to empty or failed runs. Apify counts one start event per GB of memory, with at least one event; the unchanged 512 MB default therefore has a `$0.00005` start-event fee. See the [live Pricing tab](https://apify.com/fascinating_lentil/indiamart-b2b-supplier-scraper/pricing) for current event prices, discounts and platform-usage terms. Result-event subtotals exclude this start fee.
 
 ## Use Cases
 

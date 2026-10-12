@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "indiamart-b2b-supplier-scraper",
   "title": "IndiaMART Product & Supplier Scraper",
-  "description": "Extract public IndiaMART product and supplier data with multi-city coverage and optional privacy-safe detail enrichment: prices, MOQ, ratings, badges, specifications, business address, and official domain. No phone numbers or emails.",
+  "description": "Extract IndiaMART product and supplier listings for sourcing from India: prices, MOQ, specifications, ratings and verification badges. Compare cities and export CSV/JSON; optional public business-detail enrichment. No personal contacts. Result and start-event fees apply.",
   "version": "1.0",
   "dockerfile": "Dockerfile",
   "input": "../INPUT_SCHEMA.json",
